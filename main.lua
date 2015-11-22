@@ -29,6 +29,7 @@ scr_offset=-400;
 mov_left=false;           --команда налево
 mov_right=false;          --команда направо
 mov_lastr=true;           --последняя команда
+mov_currr=true;           --текущая команда
 
 her_speed=0;
 her_maxsp=260;
@@ -97,7 +98,7 @@ function scr_shift()    --проверяем для текущего полож�
                         -- этой функции все считается исключительно в зависимости от положения экрана и направления движения
                         --суть функции - поставить флаги границ отображения на граничные объекты, то есть следующий объект должен быть уже нерисуемым
   local scr_right=scr_offset+scr_w
-  if mov_lastr then     --двигаемся вправо (в принципе, при переползании экрана функция может глючить) !переписать после ввода героя! (а может и нет)
+  if mov_currr then     --двигаемся вправо (в принципе, при переползании экрана функция может глючить) !переписать после ввода героя! (а может и нет)
   --работаем с декором
     while not(pos_d_l>=scr_offset and deco_r[flag_d_l-1][2]<=scr_offset) do         --правые края левых объектов
       --удаляем объект из набора
@@ -196,28 +197,33 @@ function love.update(dt)
     if mov_right then     --нажаты обе клавиши
       if mov_lastr then
         dir=1
+        mov_currr=true
         her_status='walk'
       else
         dir=-1
+        mov_currr=false
         her_status='walk'
       end
     else                  --нажато только "влево"
       dir=-1
+      mov_currr=false
       her_status='walk'
     end
   else
     if mov_right then     --нажато только "вправо"
       dir=1
+      mov_currr=true
       her_status='walk'
     end
   end
   
   --Двигаем героя
-  her_offset=her_offset+dir*her_maxsp*dt
+  her_speed=dir*her_maxsp*dt
+  her_offset=her_offset+her_speed
   
   --Двигаем экран
   --Если идем влево
-  if not(mov_lastr) then
+  if not(mov_currr) then
     if (((scr_offset+scr_w)-(her_width+her_offset+scr_field))>(dt*scr_speed)) then
       scr_offset=scr_offset-dt*scr_speed                          --плавно летим
     else
@@ -264,7 +270,7 @@ function love.draw()
       hero_image=im_anim_idle_l
     end
   elseif her_status=='walk' then
-    if mov_lastr then
+    if her_speed>0 then
       hero_anim=hero_walk_r
       hero_image=im_anim_walk_r
     else
